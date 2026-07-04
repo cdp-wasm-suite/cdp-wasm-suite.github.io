@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CDP WASM Suite</title>
+<meta name="description" content="The legendary CDP — hundreds of esoteric spectral, granular and waveset programs — ported to run inside your DAW, as a plug-in, in the browser or anywhere WebAssembly goes.">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+<style>
+  html,body{margin:0;padding:0;background:#8a8579;}
+  *{box-sizing:border-box;}
+  a{text-decoration:none;color:inherit;}
+  .hov:hover{background:#000 !important;color:#fff !important;}
+  a:focus-visible,[tabindex]:focus-visible,button:focus-visible{outline:3px solid #000;outline-offset:2px;}
+
+  button.fxbtn{appearance:none;-webkit-appearance:none;background:#fff;border:2px solid #000;color:#000;font:16px/1 'VT323',monospace;padding:5px 10px;cursor:pointer;letter-spacing:1px;}
+  button.fxbtn:hover{background:#000;color:#fff;}
+  button.fxbtn[aria-pressed="true"]{background:#000;color:#fff;}
+
+  @media (max-width:720px){
+    .page{padding:14px !important;}
+    .desk{padding:12px !important;}
+    /* keep the menu bar on one line — Support ♥ stays pinned top-right */
+    .nav{flex-wrap:nowrap !important;font-size:17px !important;}
+    .nav .spacer{display:block !important;}
+    .nav > a,.nav > span{padding-left:9px !important;padding-right:9px !important;}
+    .hero{padding:18px !important;gap:20px !important;}
+    .hero-main{min-width:0 !important;}
+    .logo-row{flex-direction:column !important;align-items:flex-start !important;gap:10px !important;}
+    .logo{font-size:18px !important;}
+    .h1{font-size:32px !important;margin-top:18px !important;}
+    .cta-row{gap:10px !important;}
+    .cta{width:100% !important;justify-content:center !important;text-align:center !important;}
+    .scope{width:100% !important;}
+    .cards{padding:12px !important;gap:12px !important;}
+    .card{min-width:0 !important;flex-basis:100% !important;}
+    .engine-row{padding:16px !important;gap:16px !important;}
+    .engine-main{min-width:0 !important;}
+    .engine-aside{display:none !important;}
+    .heritage-row{padding:14px !important;gap:14px !important;}
+    .heritage-main{min-width:0 !important;}
+    .specsheet{width:100% !important;}
+  }
+
+  @media (max-width:420px){
+    .nav{font-size:15px !important;}
+    .nav > a,.nav > span{padding-left:6px !important;padding-right:6px !important;}
+    .logo{font-size:16px !important;}
+    .h1{font-size:26px !important;}
+  }
+
+  /* phones: stop the two scope demos from wrapping raggedly.
+     header stays one line (ellipsis), buttons become a tidy 3-col grid,
+     and the plots get a little more height so nothing is truncated. */
+  @media (max-width:520px){
+    .scopehead{font-size:16px !important;}
+    .scopehead > [data-scope-name],.scopehead > [data-spec-name]{
+      min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .scopehead > [data-scope-dur],.scopehead > [data-spec-dur]{flex:none;white-space:nowrap;}
+    .fxrow{display:grid !important;grid-template-columns:repeat(3,1fr) !important;}
+    .fxrow-sp{display:none !important;}
+    .fxrow .fxbtn{padding-left:2px !important;padding-right:2px !important;letter-spacing:0 !important;text-align:center;}
+    .scopecvs-wave{min-height:110px !important;}
+    .scopecvs-wfall{min-height:150px !important;}
+  }
+
+  /* GEM-style "Coming Soon" alert dialog */
+  .soon-overlay{position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,0.35);}
+  .soon-overlay[data-open="true"]{display:flex;}
+  .soon-dialog{width:420px;max-width:100%;background:#fff;border:2px solid #000;box-shadow:6px 6px 0 #000;font-family:'VT323',monospace;color:#000;}
+  .soon-titlebar{display:flex;align-items:stretch;border-bottom:2px solid #000;font:20px/1 'VT323',monospace;}
+  .soon-titlebar .k{width:30px;border-right:2px solid #000;display:flex;align-items:center;justify-content:center;}
+  .soon-titlebar .t{flex:1;text-align:center;align-self:center;letter-spacing:1px;}
+  .soon-titlebar .x{width:30px;border-left:2px solid #000;display:flex;align-items:center;justify-content:center;}
+  .soon-body{padding:22px 22px 24px;}
+  .soon-badge{display:inline-block;font:14px/1 'Silkscreen',monospace;letter-spacing:2px;border:2px solid #000;padding:5px 10px;box-shadow:3px 3px 0 #000;}
+  .soon-msg{font:22px/1.4 'VT323',monospace;margin:16px 0 0;}
+  .soon-actions{display:flex;justify-content:flex-end;margin-top:22px;}
+  /* KVR Developer Challenge 2026 / support modal — shares the GEM alert look */
+  .support-dialog{width:560px;}
+  .support-dialog .kvr-banner{display:block;width:100%;height:auto;aspect-ratio:1100/196;border:2px solid #000;margin:0 0 18px;}
+  .support-dialog .support-lead{font:22px/1 'Silkscreen',monospace;letter-spacing:1px;margin:2px 0 16px;}
+  .support-dialog .support-text{font:22px/1.4 'VT323',monospace;margin:0 0 12px;}
+  .support-dialog .support-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:22px;}
+  .support-dialog .support-btn{flex:1;min-width:200px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;background:#fff;border:2px solid #000;color:#000;font:20px/1 'VT323',monospace;letter-spacing:1px;padding:9px 16px;box-shadow:3px 3px 0 #000;}
+  .support-dialog .support-btn:hover{background:#000;color:#fff;}
+</style>
+</head>
+<body>
+
+<div class="page" style="min-height:100vh;padding:60px 60px 80px;background-color:#9c978b;background-image:radial-gradient(#8d887c 1px,transparent 1px);background-size:3px 3px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#211e18;-webkit-font-smoothing:antialiased;">
+
+<div style="width:1120px;max-width:100%;margin:0 auto;font-family:'VT323',monospace;">
+  <div style="background:#00aa00;border:2px solid #000;box-shadow:6px 6px 0 #000;color:#000;">
+    <!-- desktop menu bar -->
+    <div class="nav" style="display:flex;align-items:stretch;background:#fff;border-bottom:2px solid #000;font:22px/1 'VT323',monospace;">
+      <span style="padding:5px 14px;display:flex;align-items:center;gap:8px;"><svg viewBox="0 2.346 24 19.308" width="17" height="17" style="display:block;" aria-label="Atari"><path fill="#000" d="m0 21.653s3.154-0.355 5.612-2.384c2.339-1.93 3.185-3.592 3.77-5.476 0.584-1.885 0.671-6.419 0.671-7.764v-3.683h-1.455v1.365c-0.024 2.041-0.2 5.918-1.135 8.444-2.26 6.087-7.463 6.62-7.463 6.62zm24 0s-3.154-0.355-5.61-2.384c-2.342-1.93-3.187-3.592-3.772-5.476-0.583-1.885-0.671-6.419-0.671-7.764v-3.683h1.453l1e-3 1.365c0.024 2.041 0.202 5.918 1.138 8.444 2.258 6.087 7.46 6.62 7.46 6.62zm-13.341-19.305h2.685v19.306h-2.684z"></path></svg>Desk</span>
+      <a href="#g-apps" class="hov" style="padding:6px 14px;">Suite</a>
+      <a href="#g-wasm" class="hov" style="padding:6px 14px;">Engine</a>
+      <a href="#g-heritage" class="hov" style="padding:6px 14px;">Heritage</a>
+      <span class="spacer" style="flex:1;"></span>
+      <a href="https://www.kvraudio.com/kvr-developer-challenge/2026/" data-support class="hov" style="padding:6px 14px;border-left:2px solid #000;">Support ♥</a>
+      <!-- <a href="https://github.com/olilarkin/cdp-wasm" class="hov" style="padding:6px 14px;border-left:2px solid #000;">CDP-WASM</a> -->
+    </div>
+
+    <!-- desk area -->
+    <div class="desk" style="padding:28px;">
+      <!-- main window -->
+      <div data-win style="background:#fff;border:2px solid #000;box-shadow:5px 5px 0 #000;">
+        <!-- title bar -->
+        <div style="display:flex;align-items:stretch;border-bottom:2px solid #000;font:22px/1 'VT323',monospace;">
+          <div style="width:30px;border-right:2px solid #000;display:flex;align-items:center;justify-content:center;"><div style="width:11px;height:11px;border:2px solid #000;"></div></div>
+          <div style="flex:1;text-align:center;align-self:center;letter-spacing:1px;">CDP WASM SUITE</div>
+          <div style="width:30px;border-left:2px solid #000;display:flex;align-items:center;justify-content:center;"><div style="width:13px;height:13px;border:2px solid #000;box-sizing:border-box;"></div></div>
+        </div>
+
+        <!-- HERO -->
+        <div class="hero" style="padding:30px;display:flex;gap:30px;align-items:stretch;flex-wrap:wrap;">
+          <div class="hero-main" style="flex:1;min-width:380px;display:flex;flex-direction:column;">
+            <div class="logo-row" style="display:flex;align-items:center;gap:14px;">
+              <div class="logo" style="font-family:'Silkscreen',monospace;font-size:26px;line-height:1;border:3px solid #000;padding:9px 13px;box-shadow:4px 4px 0 #000;">CDP-WASM-SUITE</div>
+              <!-- <div style="font:19px/1.2 'VT323',monospace;">THE COMPOSERS DESKTOP PROJECT<br>PORTED TO WEBASSEMBLY APPS</div> -->
+            </div>
+            <div class="h1" style="font:52px/1.0 'VT323',monospace;margin:24px 0 0;">A unique sound transformation toolkit,<br>compiled to run anywhere.</div>
+            <div style="font:22px/1.35 'VT323',monospace;margin:16px 0 0;max-width:44ch;">The legendary CDP — hundreds of esoteric spectral, granular and waveset programs for offline audio processing — ported to run in node.js, as a plug-in, in Ableton Live and in the browser with a retro node graph interface. Integrates the Faust compiler, for custom DSP development.</div>
+            <div class="cta-row" style="display:flex;gap:18px;margin-top:26px;flex-wrap:wrap;align-items:stretch;">
+              <a href="https://cdp-wasm-suite.github.io/cdp-web/" class="hov cta" style="display:flex;align-items:center;background:#fff;border:2px solid #000;margin:2px;padding:0 22px;height:48px;font:22px/1 'VT323',monospace;color:#000;letter-spacing:1px;">Try it in your browser</a>
+              <a href="https://github.com/cdp-wasm-suite/cdp-plugin/releases/latest" class="hov cta" style="display:flex;align-items:center;background:#fff;border:2px solid #000;box-shadow:0 0 0 2px #fff,0 0 0 4px #000;margin:2px;padding:0 22px;height:48px;font:22px/1 'VT323',monospace;color:#000;letter-spacing:1px;">Download the App / Plug-in ▸</a>
+              <a href="https://github.com/cdp-wasm-suite/cdp-extension/releases/latest" class="hov cta" style="display:flex;align-items:center;background:#fff;border:2px solid #000;box-shadow:0 0 0 2px #fff,0 0 0 4px #000;margin:2px;padding:0 22px;height:48px;font:22px/1 'VT323',monospace;color:#000;letter-spacing:1px;">Download the Ableton Extension ▸</a>
+              <!-- <span class="cta" style="display:flex;align-items:center;gap:8px;background:#fff;border:2px dashed #000;margin:2px;padding:0 22px;height:48px;font:22px/1 'VT323',monospace;color:#000;letter-spacing:1px;opacity:0.6;">CDP MCP <span style="font:12px/1 'Silkscreen',monospace;">SOON</span></span> -->
+            </div>
+            <div style="flex:1;"></div>
+            <div style="font:14px/1.6 'Silkscreen',monospace;margin-top:26px;letter-spacing:1px;">VST3 • AU • CLAP • APP • ABLETON EXTENSION • WEB</div>
+          </div>
+          <!-- 1-bit scopes: two live CDP demos, waveset (time) + spectral (frequency) -->
+          <div class="scope" style="width:420px;flex:none;display:flex;flex-direction:column;gap:22px;">
+
+            <!-- waveset scope: time-domain processes -->
+            <div class="scopebox" style="flex:1;min-height:0;border:2px solid #000;display:flex;flex-direction:column;background:#fff;">
+              <div class="scopehead" style="display:flex;justify-content:space-between;gap:10px;border-bottom:2px solid #000;padding:3px 9px;font:18px/1.2 'VT323',monospace;"><span data-scope-name>vocal_take_03.wav</span><span data-scope-dur>0:04.812</span></div>
+              <!-- canvas is absolutely positioned so setting its bitmap size never
+                   feeds back into layout (a 1px-per-frame growth loop at fractional page zoom) -->
+              <div class="scopecvs scopecvs-wave" style="position:relative;flex:1;min-height:92px;">
+                <canvas data-scope="wavebw" role="img" aria-label="Waveform of the current sound — the process buttons below transform it" style="position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;"></canvas>
+              </div>
+              <div class="fxrow" style="display:flex;flex-wrap:wrap;gap:6px;padding:7px 8px;border-top:2px solid #000;">
+                <button class="fxbtn" data-fx="src" aria-pressed="true">SRC</button>
+                <button class="fxbtn" data-fx="rev" aria-pressed="false">REVERSE</button>
+                <button class="fxbtn" data-fx="speed" aria-pressed="false">SPEED÷2</button>
+                <button class="fxbtn" data-fx="rpt" aria-pressed="false">REPEAT</button>
+                <button class="fxbtn" data-fx="blur" aria-pressed="false">BLUR</button>
+                <span class="fxrow-sp" style="flex:1;"></span>
+                <button class="fxbtn" data-play aria-label="Play the current sound">▶</button>
+              </div>
+              <div data-scope-cmd style="border-top:2px solid #000;padding:4px 9px;font:15px/1.35 'VT323',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">$ pick a process — this scope is live</div>
+            </div>
+
+            <!-- spectral scope: a 3D waterfall driven by real CDP spectral programs -->
+            <div class="scopebox" style="flex:1;min-height:0;border:2px solid #000;display:flex;flex-direction:column;background:#fff;">
+              <div class="scopehead" style="display:flex;justify-content:space-between;gap:10px;border-bottom:2px solid #000;padding:3px 9px;font:18px/1.2 'VT323',monospace;"><span data-spec-name>chord_sus.ana</span><span data-spec-dur>0:04.812</span></div>
+              <div class="scopecvs scopecvs-wfall" style="position:relative;flex:1;min-height:126px;">
+                <canvas data-scope="wfall" role="img" aria-label="3D waterfall spectrum of the current sound — the spectral process buttons below transform it" style="position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;"></canvas>
+              </div>
+              <div class="fxrow" style="display:flex;flex-wrap:wrap;gap:6px;padding:7px 8px;border-top:2px solid #000;">
+                <button class="fxbtn" data-sfx="src" aria-pressed="true">SRC</button>
+                <button class="fxbtn" data-sfx="blur" aria-pressed="false">BLUR</button>
+                <button class="fxbtn" data-sfx="stretch" aria-pressed="false">STRETCH</button>
+                <button class="fxbtn" data-sfx="trace" aria-pressed="false">TRACE</button>
+                <button class="fxbtn" data-sfx="freeze" aria-pressed="false">FREEZE</button>
+                <span class="fxrow-sp" style="flex:1;"></span>
+                <button class="fxbtn" data-spec-play aria-label="Play the current spectral sound">▶</button>
+              </div>
+              <div data-spec-cmd style="border-top:2px solid #000;padding:4px 9px;font:15px/1.35 'VT323',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">$ pvoc anal — spectral scope is live</div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- GALLERY WINDOW: real screenshots of CDP for Web, captured by robot -->
+      <div data-win style="margin-top:22px;background:#fff;border:2px solid #000;box-shadow:5px 5px 0 #000;">
+        <!-- title bar -->
+        <div style="display:flex;align-items:stretch;border-bottom:2px solid #000;font:20px/1 'VT323',monospace;">
+          <div style="width:30px;border-right:2px solid #000;display:flex;align-items:center;justify-content:center;"><div style="width:11px;height:11px;border:2px solid #000;"></div></div>
+          <div style="flex:1;text-align:center;align-self:center;letter-spacing:1px;">SCREENSHOTS</div>
+          <div style="width:30px;border-left:2px solid #000;display:flex;align-items:center;justify-content:center;"><div style="width:13px;height:13px;border:2px solid #000;box-sizing:border-box;"></div></div>
+        </div>
+        <!-- view tabs -->
+        <div style="display:flex;flex-wrap:wrap;gap:8px;padding:8px 10px;border-bottom:2px solid #000;">
+          <button class="fxbtn" data-shot="patch-gem" aria-pressed="false" style="font-size:18px;padding:5px 12px;">▦ PATCH · GEM</button>
+          <button class="fxbtn" data-shot="spec-green" aria-pressed="false" style="font-size:18px;padding:5px 12px;">▒ SPEC · GREEN</button>
+          <button class="fxbtn" data-shot="wfall-gem" aria-pressed="false" style="font-size:18px;padding:5px 12px;">⛰ 3D · GEM</button>
+          <button class="fxbtn" data-shot="wave-c64" aria-pressed="false" style="font-size:18px;padding:5px 12px;">∿ WAVE · C64</button>
+          <button class="fxbtn" data-shot="patch-mono" aria-pressed="true" style="font-size:18px;padding:5px 12px;">▦ PATCH · CRT</button>
+          <button class="fxbtn" data-shot="bpf-gem" aria-pressed="false" style="font-size:18px;padding:5px 12px;">○ BPF · GEM</button>
+          <button class="fxbtn" data-shot="kbd-gem" aria-pressed="false" style="font-size:18px;padding:5px 12px;">▥ KEYS · GEM</button>
+          <span style="flex:1;min-width:0;"></span>
+          <a href="https://cdp-wasm-suite.github.io/cdp-web/" class="hov" style="border:2px solid #000;padding:5px 12px;font:18px/1 'VT323',monospace;">Open the app ↗</a>
+        </div>
+        <!-- shot -->
+        <img data-shot-img src="shots/patch-mono.png" width="2120" height="1240"
+             alt="CDP for Web: a chord generator wired through PVOC analyse, time stretch and resynthesise, white-on-black CRT theme"
+             style="display:block;width:100%;height:auto;">
+        <!-- status bar -->
+        <div style="border-top:2px solid #000;padding:5px 12px;font:18px/1.2 'VT323',monospace;display:flex;gap:16px;flex-wrap:wrap;">
+          <span data-shot-cap style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">● “Spectral freeze-stretch” — a chord PVOC-stretched ×4 • theme Mono (CRT) • font Modern mono</span>
+          <span style="flex:1;"></span>
+          <span>5 themes • 3 fonts • Tab cycles views in-app</span>
+        </div>
+      </div>
+
+      <!-- APPS -->
+      <div id="g-apps" data-win style="margin-top:22px;background:#fff;border:2px solid #000;box-shadow:4px 4px 0 #000;">
+        <div style="display:flex;align-items:stretch;border-bottom:2px solid #000;font:20px/1 'VT323',monospace;">
+          <div style="width:26px;border-right:2px solid #000;display:flex;align-items:center;justify-content:center;"><div style="width:9px;height:9px;border:2px solid #000;"></div></div>
+          <div style="flex:1;text-align:center;align-self:center;letter-spacing:1px;">A SUITE OF APPS BUILT USING CDP-WASM</div>
+          <div style="width:26px;border-left:2px solid #000;display:flex;align-items:center;justify-content:center;"><div style="width:11px;height:11px;border:2px solid #000;box-sizing:border-box;"></div></div>
+        </div>
+        <div class="cards" style="padding:18px;display:flex;gap:16px;flex-wrap:wrap;">
+          <!-- plug-in -->
+          <div class="card" style="flex:1;min-width:290px;border:2px solid #000;display:flex;flex-direction:column;">
+            <div style="border-bottom:2px solid #000;padding:4px 10px;font:16px/1.2 'Silkscreen',monospace;letter-spacing:1px;">PLUG-IN</div>
+            <div style="padding:14px;display:flex;flex-direction:column;flex:1;">
+              <div style="font:26px/1.05 'VT323',monospace;">Composer’s Desktop Plug-in</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 0;">
+                <span style="border:2px solid #000;padding:2px 8px;font:16px/1.2 'VT323',monospace;">VST3</span>
+                <span style="border:2px solid #000;padding:2px 8px;font:16px/1.2 'VT323',monospace;">AU</span>
+                <span style="border:2px solid #000;padding:2px 8px;font:16px/1.2 'VT323',monospace;">CLAP</span>
+                <span style="border:2px solid #000;padding:2px 8px;font:16px/1.2 'VT323',monospace;">APP</span>
+              </div>
+              <div style="font:19px/1.35 'VT323',monospace;margin:12px 0 0;">A MIDI instrument, not an insert effect. Build a CDP patch from 130+ curated effects, render it, then play the result back polyphonically across the keyboard — in your DAW or standalone.</div>
+              <div style="flex:1;"></div>
+              <div style="display:flex;gap:10px;margin-top:16px;">
+                <a href="https://github.com/cdp-wasm-suite/cdp-plugin/releases/latest" class="hov" style="flex:1;text-align:center;background:#fff;border:2px solid #000;box-shadow:0 0 0 2px #fff,0 0 0 4px #000;margin:2px;padding:6px 0;font:19px/1 'VT323',monospace;color:#000;">Download ▸</a>
+              </div>
+            </div>
+          </div>
+          <!-- extension -->
+          <div class="card" style="flex:1;min-width:290px;border:2px solid #000;display:flex;flex-direction:column;">
+            <div style="border-bottom:2px solid #000;padding:4px 10px;font:16px/1.2 'Silkscreen',monospace;letter-spacing:1px;">ABLETON EXTENSION</div>
+            <div style="padding:14px;display:flex;flex-direction:column;flex:1;">
+              <div style="font:26px/1.05 'VT323',monospace;">Composer’s Desktop Extension</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 0;">
+                <span style="border:2px solid #000;padding:2px 8px;font:16px/1.2 'VT323',monospace;">ABLETON LIVE</span>
+              </div>
+              <div style="font:19px/1.35 'VT323',monospace;margin:12px 0 0;">A native Ableton Live extension — the same modular patcher and CDP transformations, wired straight into Live’s workflow.</div>
+              <div style="flex:1;"></div>
+              <div style="display:flex;gap:10px;margin-top:16px;">
+                <a href="https://github.com/cdp-wasm-suite/cdp-extension/releases/latest" class="hov" style="flex:1;text-align:center;background:#fff;border:2px solid #000;padding:8px 0;font:19px/1 'VT323',monospace;color:#000;">Download ▸</a>
+              </div>
+            </div>
+          </div>
+          <!-- web -->
+          <div class="card" style="flex:1;min-width:290px;border:2px solid #000;display:flex;flex-direction:column;">
+            <div style="border-bottom:2px solid #000;padding:4px 10px;font:16px/1.2 'Silkscreen',monospace;letter-spacing:1px;">WEB APP</div>
+            <div style="padding:14px;display:flex;flex-direction:column;flex:1;">
+              <div style="font:26px/1.05 'VT323',monospace;">CDP for Web</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 0;">
+                <span style="border:2px solid #000;padding:2px 8px;font:16px/1.2 'VT323',monospace;">BROWSER</span>
+                <span style="border:2px solid #000;padding:2px 8px;font:16px/1.2 'VT323',monospace;">NO INSTALL</span>
+              </div>
+              <div style="font:19px/1.35 'VT323',monospace;margin:12px 0 0;">Drop in a sound or generate one, wire up CDP transforms on a modular canvas.</div>
+              <div style="flex:1;"></div>
+              <div style="display:flex;gap:10px;margin-top:16px;">
+                <a href="https://cdp-wasm-suite.github.io/cdp-web/" class="hov" style="flex:1;text-align:center;background:#fff;border:2px solid #000;box-shadow:0 0 0 2px #fff,0 0 0 4px #000;margin:2px;padding:6px 0;font:19px/1 'VT323',monospace;color:#000;">Launch ▸</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- WASM -->
+      <div id="g-wasm" data-win style="margin-top:22px;background:#fff;border:2px solid #000;box-shadow:4px 4px 0 #000;color:#000;">
+        <div style="display:flex;align-items:stretch;border-bottom:2px solid #000;font:20px/1 'VT323',monospace;">
+          <div style="width:26px;border-right:2px solid #000;display:flex;align-items:center;justify-content:center;"><div style="width:9px;height:9px;border:2px solid #000;"></div></div>
+          <div style="flex:1;text-align:center;align-self:center;letter-spacing:1px;">THE ENGINE & AGENTIC CONTROL</div>
+          <div style="width:26px;border-left:2px solid #000;display:flex;align-items:center;justify-content:center;"><div style="width:11px;height:11px;border:2px solid #000;box-sizing:border-box;"></div></div>
+        </div>
+        <div class="engine-row" style="padding:22px;display:flex;gap:26px;align-items:center;flex-wrap:wrap;">
+          <div class="engine-main" style="flex:1;min-width:320px;">
+            <div style="font:38px/1.0 'VT323',monospace;">Built on CDP WASM</div>
+            <div style="font:20px/1.4 'VT323',monospace;margin-top:10px;max-width:52ch;">Each CDP program is a .wasm module loaded by a portable engine. WASM is platform agnostic and works in the browser and with node.js and compatible javascript runtimes. WASM versions of the CDP processes are ideal for agentic sound design using e.g. claude code, since they can run anywhere.</div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:18px;">
+              <a href="https://github.com/olilarkin/cdp-wasm" class="hov" style="display:flex;align-items:center;background:#fff;border:2px solid #000;box-shadow:0 0 0 2px #fff,0 0 0 4px #000;margin:2px;padding:0 20px;height:44px;font:20px/1 'VT323',monospace;color:#000;">View source ↗</a>
+              <a href="#" role="button" data-soon="the cdp-wasm npm package" class="hov" style="display:flex;align-items:center;background:#fff;border:2px solid #000;box-shadow:0 0 0 2px #fff,0 0 0 4px #000;margin:2px;padding:0 20px;height:44px;font:20px/1 'VT323',monospace;color:#000;">npm install cdp-wasm ↗</a>
+            </div>
+            <div style="border:2px solid #000;margin-top:18px;padding:8px 12px;font:19px/1.4 'VT323',monospace;max-width:52ch;">$ node transform.js<br>It runs in Node.js too — script CDP processes from JavaScript and batch-process whole folders of sound, no browser required.</div>
+          </div>
+          <div class="engine-aside" style="flex:1;min-width:280px;align-self:stretch;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
+            <img src="wasm-icon-1bit.png" alt="WebAssembly logo" width="44" height="44" style="width:176px;height:176px;image-rendering:pixelated;">
+            <div style="font:14px/1 'Silkscreen',monospace;letter-spacing:2px;">WEBASSEMBLY</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HERITAGE -->
+      <div id="g-heritage" data-win style="margin-top:22px;background:#fff;border:2px solid #000;box-shadow:4px 4px 0 #000;">
+        <div style="display:flex;align-items:stretch;border-bottom:2px solid #000;font:20px/1 'VT323',monospace;">
+          <div style="width:26px;border-right:2px solid #000;display:flex;align-items:center;justify-content:center;"><div style="width:9px;height:9px;border:2px solid #000;"></div></div>
+          <div style="flex:1;text-align:center;align-self:center;letter-spacing:1px;">CDP HISTORY</div>
+          <div style="width:26px;border-left:2px solid #000;display:flex;align-items:center;justify-content:center;"><div style="width:11px;height:11px;border:2px solid #000;box-sizing:border-box;"></div></div>
+        </div>
+        <div class="heritage-row" style="padding:18px;display:flex;gap:18px;flex-wrap:wrap;align-items:stretch;">
+          <div class="heritage-main" style="flex:1;min-width:340px;">
+            <div style="font:21px/1.45 'VT323',monospace;">Since the late 1980s, the <a href="https://www.composersdesktop.com" style="text-decoration: underline;">Composers Desktop Project</a> has been the deep end of digital sound transformation — hundreds of processes for spectral manipulation, granulation, time-stretching, waveset distortion, built by composers for the hardware of the time — starting in 1986 with the Atari ST — and quietly refined ever since. CDP has been developed over many years by many different people.</div>
+            <a href="https://www.composersdesktop.com" class="hov" style="display:inline-block;margin:14px 2px 2px 0;border:2px solid #000;box-shadow:0 0 0 2px #fff,0 0 0 4px #000;padding:7px 16px;font:19px/1 'VT323',monospace;color:#000;">composersdesktop.com ↗</a>
+          </div>
+          <div class="specsheet" style="width:240px;flex:none;border:2px solid #000;padding:14px;font:19px/1.75 'VT323',monospace;background:#fff;background-image:radial-gradient(#000 35%,transparent 36%);background-size:3px 3px;">
+            <div style="background:#fff;padding:2px 6px;display:inline-block;font:14px/1 'Silkscreen',monospace;letter-spacing:1px;margin-bottom:8px;">SPEC SHEET</div>
+            <div style="background:#fff;padding:8px 10px;">origin&nbsp;&nbsp;: 1987, York UK<br>authors&nbsp;: <a href="https://www.composersdesktop.com/about.html" style="text-decoration:underline;">Lots</a><br>cdp-wasm: <a href="https://www.olilarkin.com/" style="text-decoration:underline;">Oli Larkin</a><br>programs: 200+</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FOOTER -->
+      <div style="margin-top:22px;display:flex;align-items:center;gap:16px;background:#fff;border:2px solid #000;box-shadow:4px 4px 0 #000;padding:8px 12px;font:18px/1 'VT323',monospace;flex-wrap:wrap;">
+        <a href="https://www.patreon.com/c/olilarkin/membership" class="hov" style="display:flex;align-items:center;gap:8px;background:#fff;border:2px solid #000;box-shadow:0 0 0 2px #fff,0 0 0 4px #000;margin:2px;padding:7px 16px;font:19px/1 'VT323',monospace;color:#000;letter-spacing:1px;">Support this project on Patreon ♥</a>
+        <div style="flex:1;"></div>
+        <span>CDP WASM SUITE by <a href="https://www.olilarkin.com/" style="text-decoration:underline;">Oli Larkin</a> • © 2026</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- GEM-style "Coming Soon" alert dialog -->
+<div class="soon-overlay" data-soon-overlay role="dialog" aria-modal="true" aria-labelledby="soon-title" aria-describedby="soon-msg">
+  <div class="soon-dialog">
+    <div class="soon-titlebar">
+      <div class="k"><div style="width:11px;height:11px;border:2px solid #000;"></div></div>
+      <div class="t" id="soon-title">ALERT</div>
+      <button class="x hov" data-soon-close aria-label="Close" style="appearance:none;-webkit-appearance:none;background:#fff;border:0;border-left:2px solid #000;cursor:pointer;font:20px/1 'VT323',monospace;color:#000;">✕</button>
+    </div>
+    <div class="soon-body">
+      <div class="soon-badge">COMING SOON</div>
+      <div class="soon-msg" id="soon-msg">This isn’t released yet.</div>
+      <div class="soon-actions">
+        <button class="fxbtn" data-soon-close autofocus>OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- KVR Developer Challenge 2026 / support dialog (opened by the Support ♥ menu item) -->
+<div class="soon-overlay" data-support-overlay role="dialog" aria-modal="true" aria-labelledby="support-title">
+  <div class="soon-dialog support-dialog">
+    <div class="soon-titlebar">
+      <div class="k"><div style="width:11px;height:11px;border:2px solid #000;"></div></div>
+      <div class="t" id="support-title">SUPPORT</div>
+      <button class="x hov" data-support-close aria-label="Close" style="appearance:none;-webkit-appearance:none;background:#fff;border:0;border-left:2px solid #000;cursor:pointer;font:20px/1 'VT323',monospace;color:#000;">✕</button>
+    </div>
+    <div class="soon-body">
+      <a href="https://www.kvraudio.com/kvr-developer-challenge/2026/" target="_blank" rel="noopener">
+        <img class="kvr-banner" src="kvrdc26.png" alt="KVR Developer Challenge 2026" width="1100" height="196">
+      </a>
+      <div class="support-lead">How to support this project</div>
+      <div class="support-text">The plugin built on the CDP&nbsp;WASM&nbsp;Suite is my entry in the <b>KVR Developer&nbsp;Challenge&nbsp;2026</b>. If you think this is cool, your vote would mean a lot!</div>
+      <div class="support-text">You can also sponsor ongoing development on Patreon. Thank you! ♥</div>
+      <div class="support-actions">
+        <a class="support-btn" href="https://www.kvraudio.com/kvr-developer-challenge/2026/" target="_blank" rel="noopener">Vote on KVR ★</a>
+        <a class="support-btn" href="https://www.patreon.com/c/olilarkin/membership" target="_blank" rel="noopener">Sponsor on Patreon ♥</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---- the scope is a tiny CDP rig: one source sound, four real processes ----
+  var SR = 44100, N = 65536; // ~1.49s preview buffer
+  var srcBuf = null, srcPeak = 0.3, curBuf = null, curFx = 'src';
+  var actx = null, playing = null, playStart = 0, playKind = null;
+
+  // ---- the second scope is a spectral rig: additive partials analysed into a
+  //      time/frequency grid, drawn as a hidden-line 3D waterfall ----
+  var SPEC_T = 22, SPEC_F = 110, SFMIN = 70, SFMAX = 7200;
+  var specParts = null, curSpecFrames = null, curSpecBuf = null, curSpecFx = 'src';
+
+  function genSource(){
+    var out = new Float32Array(N);
+    var H = [1, 0.55, 0.3, 0.5, 0.4, 0.18, 0.12, 0.08];
+    var ph = 0;
+    for(var i=0;i<N;i++){
+      var t = i/N;
+      var f0 = 112*(1 + 0.035*Math.sin(2*Math.PI*(4.2*t+0.2)) + 0.05*Math.sin(2*Math.PI*0.9*t));
+      ph += 2*Math.PI*f0/SR;
+      var s = 0;
+      for(var k=0;k<H.length;k++) s += H[k]*Math.sin(ph*(k+1));
+      var n = Math.sin(i*12.9898)*43758.5453; n = (n - Math.floor(n))*2 - 1;
+      s += n*0.05;
+      var env = Math.exp(-Math.pow((t-0.33)*3.2,2))*0.7 + Math.exp(-Math.pow((t-0.72)*5,2))*0.95 + 0.04;
+      var edge = Math.min(1, i/600)*Math.min(1, (N-i)/1600);
+      out[i] = s*env*edge*0.16;
+    }
+    srcPeak = 0.0001;
+    for(var j=0;j<N;j++){ var v = Math.abs(out[j]); if(v>srcPeak) srcPeak = v; }
+    return out;
+  }
+
+  function movingAvg(a, R){
+    var n = a.length, ps = new Float64Array(n+1);
+    for(var i=0;i<n;i++) ps[i+1] = ps[i] + a[i];
+    var out = new Float32Array(n);
+    for(var j=0;j<n;j++){
+      var lo = Math.max(0, j-R), hi = Math.min(n-1, j+R);
+      out[j] = (ps[hi+1]-ps[lo])/(hi-lo+1);
+    }
+    return out;
+  }
+
+  // ---- spectral source: harmonic partials whose upper overtones step in over
+  //      time, so the untouched waterfall reads as a harmonic series climbing ----
+  function genSpectralSource(){
+    var f0 = 110, K = 20, parts = [];
+    for(var k=1;k<=K;k++){
+      var a = new Float32Array(SPEC_T);
+      for(var t=0;t<SPEC_T;t++){
+        var tt = t/(SPEC_T-1);
+        var onset = (k-1)/(K-1)*0.8;               // higher partials arrive later
+        var gate = 1/(1+Math.exp(-(tt-onset)*16));
+        var tail = 1/(1+Math.exp((tt-0.92)*22));   // whole thing fades at the end
+        a[t] = Math.pow(1/k, 0.75)*gate*tail;
+      }
+      parts.push({ f:f0*k, a:a });
+    }
+    return parts;
+  }
+
+  // spectral processes operate on the partial list, mirroring real CDP programs
+  function specBlur(parts){                          // blur blur: average frames over time
+    var R = 4;
+    return parts.map(function(p){
+      var a = p.a, n = a.length, b = new Float32Array(n);
+      for(var i=0;i<n;i++){
+        var s = 0, c = 0;
+        for(var j=Math.max(0,i-R);j<=Math.min(n-1,i+R);j++){ s+=a[j]; c++; }
+        b[i] = s/c;
+      }
+      return { f:p.f, a:b };
+    });
+  }
+  function specStretch(parts){                        // stretch spectrum: spread partials apart
+    var F0 = 110;
+    return parts.map(function(p){
+      return { f:F0*Math.pow(p.f/F0, 1.28), a:p.a.slice() };
+    });
+  }
+  function specTrace(parts){                          // hilite trace: keep the loudest partials
+    var n = parts.length, T = parts[0].a.length, KEEP = 5;
+    var out = parts.map(function(p){ return { f:p.f, a:new Float32Array(T) }; });
+    for(var t=0;t<T;t++){
+      var order = [];
+      for(var i=0;i<n;i++) order.push(i);
+      order.sort(function(x,y){ return parts[y].a[t]-parts[x].a[t]; });
+      for(var k=0;k<KEEP && k<n;k++) out[order[k]].a[t] = parts[order[k]].a[t];
+    }
+    return out;
+  }
+  function specFreeze(parts){                         // spec freeze: hold one frame throughout
+    var T = parts[0].a.length, best = 0, bestE = -1;
+    for(var t=0;t<T;t++){
+      var e = 0;
+      for(var i=0;i<parts.length;i++) e += parts[i].a[t];
+      if(e>bestE){ bestE = e; best = t; }
+    }
+    return parts.map(function(p){
+      var v = p.a[best], a = new Float32Array(T);
+      for(var t=0;t<T;t++) a[t] = v;
+      return { f:p.f, a:a };
+    });
+  }
+
+  function binOfFreq(f){
+    return Math.log(f/SFMIN)/Math.log(SFMAX/SFMIN)*(SPEC_F-1);
+  }
+  // partial list -> normalised time/frequency magnitude grid (peaks as gaussian bumps)
+  function partialsToFrames(parts){
+    var frames = [], t, i, b, mx = 0, SIG = 1.15;
+    for(t=0;t<SPEC_T;t++){
+      var row = new Float32Array(SPEC_F);
+      for(i=0;i<parts.length;i++){
+        var f = parts[i].f, amp = parts[i].a[t];
+        if(amp<=0 || f<SFMIN || f>SFMAX) continue;
+        var cb = binOfFreq(f);
+        var lo = Math.max(0, Math.floor(cb-4)), hi = Math.min(SPEC_F-1, Math.ceil(cb+4));
+        for(b=lo;b<=hi;b++){ var d=b-cb; row[b] += amp*Math.exp(-(d*d)/(2*SIG*SIG)); }
+      }
+      for(b=0;b<SPEC_F;b++) if(row[b]>mx) mx = row[b];
+      frames.push(row);
+    }
+    if(mx>0) for(t=0;t<SPEC_T;t++){ var r=frames[t]; for(b=0;b<SPEC_F;b++) r[b]/=mx; }
+    return frames;
+  }
+  // additive resynthesis of the partial list, so ▶ plays the spectral result
+  function specToBuffer(parts){
+    var out = new Float32Array(N), i, p;
+    for(p=0;p<parts.length;p++){
+      var f = parts[p].f; if(f>=SR/2) continue;
+      var a = parts[p].a, dph = 2*Math.PI*f/SR, ph = 0;
+      for(i=0;i<N;i++){
+        var tt = i/N*(SPEC_T-1), t0 = tt|0, fr = tt-t0;
+        var amp = a[t0]*(1-fr) + a[Math.min(t0+1,SPEC_T-1)]*fr;
+        out[i] += amp*Math.sin(ph); ph += dph;
+      }
+    }
+    var pk = 0.0001; for(i=0;i<N;i++){ var v=Math.abs(out[i]); if(v>pk) pk=v; }
+    var g = 0.22/pk;
+    for(i=0;i<N;i++){ var edge = Math.min(1,i/800)*Math.min(1,(N-i)/1600); out[i] *= g*edge; }
+    return out;
+  }
+
+  var SPECFX = {
+    src:     { file:'chord_sus.ana', dur:'0:04.812', cmd:'$ pvoc anal 1 chord_sus.wav chord_sus.ana',
+               fn:function(a){ return a; } },
+    blur:    { file:'out_blur.ana', dur:'0:04.812', cmd:'$ blur blur chord_sus.ana out_blur.ana 40',
+               fn:specBlur },
+    stretch: { file:'out_str.ana', dur:'0:06.410', cmd:'$ stretch spectrum 2 chord_sus.ana out_str.ana 1.28',
+               fn:specStretch },
+    trace:   { file:'out_trace.ana', dur:'0:04.812', cmd:'$ hilite trace 1 chord_sus.ana out_trace.ana 5',
+               fn:specTrace },
+    freeze:  { file:'out_frz.ana', dur:'0:04.812', cmd:'$ spec freeze chord_sus.ana out_frz.ana 0.42',
+               fn:specFreeze }
+  };
+
+  var FX = {
+    src:  { file:'vocal_take_03.wav', dur:'0:04.812', cmd:'$ vocal_take_03.wav — source, untouched',
+            fn:function(a){ return a; } },
+    rev:  { file:'out_rev.wav', dur:'0:04.812', cmd:'$ modify radical 1 vocal_take_03.wav out_rev.wav',
+            fn:function(a){ var b=new Float32Array(a.length); for(var i=0;i<a.length;i++) b[i]=a[a.length-1-i]; return b; } },
+    speed:{ file:'out_slow.wav', dur:'0:09.624', cmd:'$ modify speed 2 vocal_take_03.wav out_slow.wav 0.5',
+            fn:function(a){ var b=new Float32Array(a.length);
+              for(var i=0;i<a.length;i++){ var x=i*0.5, j=x|0, f=x-j; b[i]=a[j]*(1-f)+a[Math.min(j+1,a.length-1)]*f; }
+              return b; } },
+    rpt:  { file:'out_rpt.wav', dur:'0:04.812', cmd:'$ distort repeat vocal_take_03.wav out_rpt.wav 4',
+            fn:function(a){ var b=new Float32Array(a.length), C=3072, K=768;
+              for(var i=0;i<a.length;i++){ var c=(i/C)|0, j=i-c*C, r=j%K;
+                var fade=Math.min(1, r/48, (K-r)/48);
+                b[i]=a[c*C+r]*(0.6+0.4*fade); }
+              return b; } },
+    blur: { file:'out_blur.wav', dur:'0:04.812', cmd:'$ blur blur vocal_take_03.ana out_blur.ana 40',
+            fn:function(a){ return movingAvg(movingAvg(a, 22), 22); } }
+  };
+
+  var Scopes = {
+    drawWaveBW: function(c){
+      if(!srcBuf){ srcBuf = genSource(); curBuf = srcBuf; }
+      var w = c.clientWidth || 400, h = c.clientHeight || 96;
+      if(c.width !== w || c.height !== h){ c.width = w; c.height = h; }
+      var ctx = c.getContext('2d');
+      ctx.fillStyle = '#fff'; ctx.fillRect(0,0,w,h);
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, (h/2)|0, w, 1);
+      var buf = curBuf, n = buf.length, scale = (h/2)*0.92/srcPeak;
+      for(var x=0; x<w; x++){
+        var i0 = (x/w*n)|0, i1 = (((x+1)/w*n)|0)+1;
+        var mn = 0, mx = 0;
+        for(var i=i0; i<i1 && i<n; i++){ var v=buf[i]; if(v<mn)mn=v; if(v>mx)mx=v; }
+        var top = h/2 - mx*scale, bot = h/2 - mn*scale;
+        ctx.fillRect(x, top, 1, Math.max(1, bot-top));
+      }
+      // 1-bit inverted playhead while the waveset sound is playing
+      if(playing && playKind==='wave' && actx){
+        var p = (actx.currentTime - playStart)/(N/SR);
+        if(p >= 0 && p <= 1){
+          ctx.globalCompositeOperation = 'difference';
+          ctx.fillStyle = '#fff';
+          ctx.fillRect((p*(w-2))|0, 0, 2, h);
+          ctx.globalCompositeOperation = 'source-over';
+        }
+      }
+    },
+    drawWaterfall: function(c){
+      if(!specParts) specParts = genSpectralSource();
+      if(!curSpecFrames) curSpecFrames = partialsToFrames(SPECFX[curSpecFx].fn(specParts));
+      var w = c.clientWidth || 400, h = c.clientHeight || 140;
+      if(c.width !== w || c.height !== h){ c.width = w; c.height = h; }
+      var ctx = c.getContext('2d');
+      ctx.fillStyle = '#fff'; ctx.fillRect(0,0,w,h);
+      var frames = curSpecFrames, T = frames.length, F = frames[0].length;
+      var mL = 8, mR = 8, mT = 12, mB = 8;
+      var pA = h - mT - mB;                       // vertical drawing area
+      var skew = Math.min(48, w*0.17);            // horizontal recede of far rows
+      var plotW = w - mL - mR - skew;
+      var yNear = h - mB, yFar = mT + pA*0.36;    // near row at bottom, far row up-right
+      var band = yNear - yFar, ampH = pA*0.5;
+      var t, f, d, baseY, xoff, px, py, firstX, lastX;
+      ctx.lineWidth = 1;
+      for(t=T-1;t>=0;t--){                        // painter's algorithm: far rows first
+        d = (T>1) ? t/(T-1) : 0;
+        baseY = yNear - d*band;
+        xoff = mL + d*skew;
+        firstX = xoff; lastX = xoff + plotW;
+        // white fill under the ridge to occlude the rows drawn behind it
+        ctx.beginPath();
+        for(f=0;f<F;f++){
+          px = xoff + (f/(F-1))*plotW; py = baseY - frames[t][f]*ampH;
+          if(f===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+        }
+        ctx.lineTo(lastX, h); ctx.lineTo(firstX, h); ctx.closePath();
+        ctx.fillStyle = '#fff'; ctx.fill();
+        // then stroke just the ridge line
+        ctx.beginPath();
+        for(f=0;f<F;f++){
+          px = xoff + (f/(F-1))*plotW; py = baseY - frames[t][f]*ampH;
+          if(f===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+        }
+        ctx.strokeStyle = '#000'; ctx.stroke();
+      }
+    },
+    drawAll: function(){
+      var self = this;
+      document.querySelectorAll('canvas[data-scope]').forEach(function(c){
+        var kind = c.getAttribute('data-scope');
+        if(kind==='wavebw') self.drawWaveBW(c);
+        else if(kind==='wfall') self.drawWaterfall(c);
+      });
+    }
+  };
+
+  // ---- screenshot gallery: real captures of cdp-web, one tab per shot ----
+  var GALLERY = {
+    'patch-gem':  { cap: '● “Talking horn” — speech formants imposed on a horn • theme GEM • font Atari ST',
+                    alt: 'CDP for Web: the Talking horn recipe — two sources cross-synthesised through a vocoder in the GEM-desktop patcher' },
+    'spec-green': { cap: '● “Noise sweep” — a resonant band arcs through noise • spectrogram • theme Green terminal',
+                    alt: 'CDP for Web: log-frequency spectrogram of a resonant filter sweeping through noise, green-on-black terminal theme' },
+    'wfall-gem':  { cap: '● “Harmonic series” — overtones of 110 Hz stepping up • 3D waterfall • theme GEM (mono)',
+                    alt: 'CDP for Web: hidden-line 3D waterfall spectrum of a sine stepping up the harmonic series, one-bit black-on-white GEM theme' },
+    'wave-c64':   { cap: '● “Scrambled speech” — speech cut up and reassembled • waveform • theme C64 • font Modern sans',
+                    alt: 'CDP for Web: waveform editor showing randomly reassembled speech, purple-on-blue C64 theme with a modern sans font' },
+    'patch-mono': { cap: '● “Spectral freeze-stretch” — a chord PVOC-stretched ×4 • theme Mono (CRT) • font Modern mono',
+                    alt: 'CDP for Web: a chord generator wired through PVOC analyse, time stretch and resynthesise, white-on-black CRT theme' },
+    'bpf-gem':    { cap: '● “Tremolo pad” — a breakpoint envelope cabled into the tremolo rate • theme GEM (mono)',
+                    alt: 'CDP for Web: a Breakpoint envelope window cabled into a tremolo’s rate parameter, the output waveform pulsing faster as the curve rises' },
+    'kbd-gem':    { cap: '● “Scrambled chord” — play the render back polyphonically on the sampler keyboard • theme GEM • font Atari ST',
+                    alt: 'CDP for Web: the docked on-screen MIDI sampler keyboard with a C-major triad held, playing back a rendered Scrambled chord patch, one-bit GEM theme' }
+  };
+
+  function setShot(key){
+    var g = GALLERY[key];
+    if(!g) return;
+    var img = document.querySelector('[data-shot-img]');
+    img.src = 'shots/' + key + '.png';
+    img.alt = g.alt;
+    document.querySelector('[data-shot-cap]').textContent = g.cap;
+    document.querySelectorAll('button[data-shot]').forEach(function(b){
+      b.setAttribute('aria-pressed', String(b.getAttribute('data-shot') === key));
+    });
+  }
+
+  function drawWaveOnly(){
+    var c = document.querySelector('canvas[data-scope="wavebw"]');
+    if(c) Scopes.drawWaveBW(c);
+  }
+
+  function drawWfallOnly(){
+    var c = document.querySelector('canvas[data-scope="wfall"]');
+    if(c) Scopes.drawWaterfall(c);
+  }
+
+  function setSpecFx(key){
+    if(!specParts) specParts = genSpectralSource();
+    curSpecFx = key;
+    var parts = SPECFX[key].fn(specParts);
+    curSpecFrames = partialsToFrames(parts);
+    curSpecBuf = specToBuffer(parts);
+    document.querySelectorAll('button[data-sfx]').forEach(function(b){
+      b.setAttribute('aria-pressed', String(b.getAttribute('data-sfx') === key));
+    });
+    var nm = document.querySelector('[data-spec-name]'); if(nm) nm.textContent = SPECFX[key].file;
+    var du = document.querySelector('[data-spec-dur]');  if(du) du.textContent = SPECFX[key].dur;
+    var cm = document.querySelector('[data-spec-cmd]');  if(cm) cm.textContent = SPECFX[key].cmd;
+    drawWfallOnly();
+  }
+
+  function setFx(key){
+    if(!srcBuf){ srcBuf = genSource(); }
+    curFx = key;
+    curBuf = FX[key].fn(srcBuf);
+    document.querySelectorAll('button[data-fx]').forEach(function(b){
+      b.setAttribute('aria-pressed', String(b.getAttribute('data-fx') === key));
+    });
+    document.querySelector('[data-scope-name]').textContent = FX[key].file;
+    document.querySelector('[data-scope-dur]').textContent = FX[key].dur;
+    document.querySelector('[data-scope-cmd]').textContent = FX[key].cmd;
+    drawWaveOnly();
+  }
+
+  function startBuffer(buf, kind, animate){
+    if(!buf) return;
+    try{ actx = actx || new (window.AudioContext || window.webkitAudioContext)(); }
+    catch(e){ return; }
+    if(actx.state === 'suspended') actx.resume();
+    if(playing){ try{ playing.stop(); }catch(e){} playing = null; }
+    var b = actx.createBuffer(1, buf.length, SR);
+    b.getChannelData(0).set(buf);
+    var s = actx.createBufferSource();
+    s.buffer = b; s.connect(actx.destination);
+    playStart = actx.currentTime; playing = s; playKind = kind;
+    s.onended = function(){ if(playing === s){ playing = null; if(animate) animate(); } };
+    s.start();
+    if(animate){ (function loop(){ if(playing !== s) return; animate(); requestAnimationFrame(loop); })(); }
+  }
+
+  function play(){ startBuffer(curBuf, 'wave', drawWaveOnly); }
+  function playSpec(){ startBuffer(curSpecBuf, 'spec', null); }
+
+  // GEM-style "growing box" window open, as on the Atari ST desktop
+  function gemOpen(){
+    try{ if(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return; }
+    catch(e){ return; }
+    var vh = window.innerHeight || 800;
+    var wins = [].slice.call(document.querySelectorAll('[data-win]')).filter(function(w){
+      var r = w.getBoundingClientRect();
+      return r.top < vh && r.bottom > 0;
+    });
+    if(!wins.length) return;
+    wins.forEach(function(w){ w.style.visibility = 'hidden'; });
+    setTimeout(function(){ wins.forEach(function(w){ w.style.visibility = ''; }); }, 1600);
+    wins.forEach(function(w, idx){
+      setTimeout(function(){
+        var r = w.getBoundingClientRect();
+        var box = document.createElement('div');
+        box.style.cssText = 'position:fixed;left:0;top:0;border:2px dashed #000;pointer-events:none;z-index:99;';
+        document.body.appendChild(box);
+        var cx = r.left + r.width/2, cy = r.top + r.height/2;
+        var D = 190, t0 = performance.now();
+        function step(now){
+          var p = Math.min(1, (now - t0)/D);
+          var ww = 24 + (r.width - 24)*p, hh = 16 + (r.height - 16)*p;
+          box.style.left = (cx - ww/2) + 'px'; box.style.top = (cy - hh/2) + 'px';
+          box.style.width = ww + 'px'; box.style.height = hh + 'px';
+          if(p < 1){ requestAnimationFrame(step); }
+          else { if(box.parentNode) box.parentNode.removeChild(box); w.style.visibility = ''; }
+        }
+        requestAnimationFrame(step);
+      }, 90 + idx*130);
+    });
+  }
+
+  // ---- "Coming Soon" modal for features that aren't released yet ----
+  function initSoonModal(){
+    var overlay = document.querySelector('[data-soon-overlay]');
+    if(!overlay) return;
+    var msg = overlay.querySelector('#soon-msg');
+    var lastFocus = null;
+
+    function open(what){
+      lastFocus = document.activeElement;
+      msg.textContent = what
+        ? what.charAt(0).toUpperCase() + what.slice(1) + ' isn’t released yet — check back soon.'
+        : 'This isn’t released yet — check back soon.';
+      overlay.setAttribute('data-open', 'true');
+      var ok = overlay.querySelector('[data-soon-close]');
+      if(ok) ok.focus();
+    }
+    function close(){
+      overlay.removeAttribute('data-open');
+      if(lastFocus && lastFocus.focus) lastFocus.focus();
+    }
+
+    document.querySelectorAll('[data-soon]').forEach(function(el){
+      el.addEventListener('click', function(e){
+        e.preventDefault();
+        open(el.getAttribute('data-soon'));
+      });
+    });
+    overlay.querySelectorAll('[data-soon-close]').forEach(function(b){
+      b.addEventListener('click', close);
+    });
+    overlay.addEventListener('click', function(e){ if(e.target === overlay) close(); });
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape' && overlay.getAttribute('data-open') === 'true') close();
+    });
+  }
+
+  // ---- KVR Developer Challenge / support modal ----
+  function initSupportModal(){
+    var overlay = document.querySelector('[data-support-overlay]');
+    if(!overlay) return;
+    var lastFocus = null;
+
+    function open(){
+      lastFocus = document.activeElement;
+      overlay.setAttribute('data-open', 'true');
+      var close = overlay.querySelector('[data-support-close]');
+      if(close) close.focus();
+    }
+    function close(){
+      overlay.removeAttribute('data-open');
+      if(lastFocus && lastFocus.focus) lastFocus.focus();
+    }
+
+    document.querySelectorAll('[data-support]').forEach(function(el){
+      el.addEventListener('click', function(e){ e.preventDefault(); open(); });
+    });
+    overlay.querySelectorAll('[data-support-close]').forEach(function(b){
+      b.addEventListener('click', close);
+    });
+    overlay.addEventListener('click', function(e){ if(e.target === overlay) close(); });
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape' && overlay.getAttribute('data-open') === 'true') close();
+    });
+  }
+
+  function mount(){
+    initSoonModal();
+    initSupportModal();
+    document.querySelectorAll('button[data-fx]').forEach(function(b){
+      b.addEventListener('click', function(){ setFx(b.getAttribute('data-fx')); play(); });
+    });
+    var pb = document.querySelector('button[data-play]');
+    if(pb) pb.addEventListener('click', play);
+    document.querySelectorAll('button[data-sfx]').forEach(function(b){
+      b.addEventListener('click', function(){ setSpecFx(b.getAttribute('data-sfx')); playSpec(); });
+    });
+    var spb = document.querySelector('button[data-spec-play]');
+    if(spb) spb.addEventListener('click', playSpec);
+    document.querySelectorAll('button[data-shot]').forEach(function(b){
+      b.addEventListener('click', function(){ setShot(b.getAttribute('data-shot')); });
+    });
+    // fetch the other shots once idle so tab switches are instant
+    window.addEventListener('load', function(){
+      setTimeout(function(){
+        Object.keys(GALLERY).forEach(function(k){ var i = new Image(); i.src = 'shots/' + k + '.png'; });
+      }, 800);
+    });
+    setSpecFx('src');
+    gemOpen();
+    var r = function(){ Scopes.drawAll(); };
+    requestAnimationFrame(function(){ Scopes.drawAll(); requestAnimationFrame(r); });
+    [80,250,600,1200].forEach(function(t){ setTimeout(r, t); });
+    window.addEventListener('resize', r);
+    window.addEventListener('load', r);
+    if(document.fonts && document.fonts.ready){ document.fonts.ready.then(r); }
+    if(window.ResizeObserver){
+      var ro = new ResizeObserver(function(){ Scopes.drawAll(); });
+      document.querySelectorAll('canvas[data-scope]').forEach(function(c){ ro.observe(c); });
+    }
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', mount);
+  } else {
+    mount();
+  }
+})();
+</script>
+</body>
+</html>
