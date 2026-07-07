@@ -1,0 +1,13 @@
+{
+  "name": "cdp-wasm-suite-site",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "shots": "node scripts/shoot.mjs shots",
+    "icons": "node scripts/make-icons.mjs",
+    "og": "node scripts/make-og.mjs"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^25.3.0"
+  }
+}
