@@ -596,8 +596,13 @@
       if(!specParts) specParts = genSpectralSource();
       if(!curSpecFrames) curSpecFrames = partialsToFrames(SPECFX[curSpecFx].fn(specParts));
       var w = c.clientWidth || 400, h = c.clientHeight || 140;
-      if(c.width !== w || c.height !== h){ c.width = w; c.height = h; }
+      // the ridges are diagonal strokes, so unlike the waveform's integer fillRects
+      // they antialias — draw them at device resolution, then threshold back to 1-bit
+      var dpr = Math.min(3, window.devicePixelRatio || 1);
+      var bw = Math.round(w*dpr), bh = Math.round(h*dpr);
+      if(c.width !== bw || c.height !== bh){ c.width = bw; c.height = bh; }
       var ctx = c.getContext('2d');
+      ctx.setTransform(dpr,0,0,dpr,0,0);
       ctx.fillStyle = '#fff'; ctx.fillRect(0,0,w,h);
       var frames = curSpecFrames, T = frames.length, F = frames[0].length;
       var mL = 8, mR = 8, mT = 12, mB = 8;
@@ -629,6 +634,14 @@
         }
         ctx.strokeStyle = '#000'; ctx.stroke();
       }
+      // 1-bit pass: every grey edge pixel snaps to black or white, no halftone
+      ctx.setTransform(1,0,0,1,0,0);
+      var im = ctx.getImageData(0,0,bw,bh), bits = im.data;
+      for(var i=0;i<bits.length;i+=4){
+        var v = bits[i] < 190 ? 0 : 255;
+        bits[i] = bits[i+1] = bits[i+2] = v; bits[i+3] = 255;
+      }
+      ctx.putImageData(im,0,0);
     },
     drawAll: function(){
       var self = this;
