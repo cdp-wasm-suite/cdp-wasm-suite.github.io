@@ -143,7 +143,7 @@
               <!-- <div style="font:19px/1.2 'VT323',monospace;">THE COMPOSERS DESKTOP PROJECT<br>PORTED TO WEBASSEMBLY APPS</div> -->
             </div>
             <div class="h1" style="font:52px/1.0 'VT323',monospace;margin:24px 0 0;">A unique sound transformation toolkit,<br>compiled to run anywhere.</div>
-            <div style="font:22px/1.35 'VT323',monospace;margin:16px 0 0;max-width:44ch;">The legendary CDP — hundreds of esoteric spectral, granular and waveset programs for offline audio processing — ported to run in node.js, as a plug-in, in Ableton Live and in the browser with a retro node graph interface. Integrates the Faust compiler, for custom DSP development.</div>
+            <div style="font:22px/1.35 'VT323',monospace;margin:16px 0 0;max-width:44ch;">The legendary CDP — hundreds of esoteric spectral, granular and waveset programs for offline audio processing — ported to run in node.js, as a plug-in, in Ableton Live and in the browser with a retro-computing themed node graph interface. Integrates the Faust compiler, for custom DSP development.</div>
             <div class="cta-row" style="display:flex;gap:18px;margin-top:26px;flex-wrap:wrap;align-items:stretch;">
               <a href="https://cdp-wasm-suite.github.io/cdp-web/" class="hov cta" style="display:flex;align-items:center;background:#fff;border:2px solid #000;margin:2px;padding:0 22px;height:48px;font:22px/1 'VT323',monospace;color:#000;letter-spacing:1px;">Try it in your browser</a>
               <a href="https://github.com/cdp-wasm-suite/cdp-plugin/releases/latest" class="hov cta" style="display:flex;align-items:center;background:#fff;border:2px solid #000;box-shadow:0 0 0 2px #fff,0 0 0 4px #000;margin:2px;padding:0 22px;height:48px;font:22px/1 'VT323',monospace;color:#000;letter-spacing:1px;">Download the App / Plug-in ▸</a>
@@ -238,6 +238,22 @@
           <div style="width:26px;border-left:2px solid #000;display:flex;align-items:center;justify-content:center;"><div style="width:11px;height:11px;border:2px solid #000;box-sizing:border-box;"></div></div>
         </div>
         <div class="cards" style="padding:18px;display:flex;gap:16px;flex-wrap:wrap;">
+          <!-- web -->
+          <div class="card" style="flex:1;min-width:290px;border:2px solid #000;display:flex;flex-direction:column;">
+            <div style="border-bottom:2px solid #000;padding:4px 10px;font:16px/1.2 'Silkscreen',monospace;letter-spacing:1px;">WEB APP</div>
+            <div style="padding:14px;display:flex;flex-direction:column;flex:1;">
+              <div style="font:26px/1.05 'VT323',monospace;">CDP for Web</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 0;">
+                <span style="border:2px solid #000;padding:2px 8px;font:16px/1.2 'VT323',monospace;">BROWSER</span>
+                <span style="border:2px solid #000;padding:2px 8px;font:16px/1.2 'VT323',monospace;">NO INSTALL</span>
+              </div>
+              <div style="font:19px/1.35 'VT323',monospace;margin:12px 0 0;">cdp-web: A retro-computing themed node graph patcher CDP frontend in a web application.</div>
+              <div style="flex:1;"></div>
+              <div style="display:flex;gap:10px;margin-top:16px;">
+                <a href="https://cdp-wasm-suite.github.io/cdp-web/" class="hov" style="flex:1;text-align:center;background:#fff;border:2px solid #000;box-shadow:0 0 0 2px #fff,0 0 0 4px #000;margin:2px;padding:6px 0;font:19px/1 'VT323',monospace;color:#000;">Launch ▸</a>
+              </div>
+            </div>
+          </div>
           <!-- plug-in -->
           <div class="card" style="flex:1;min-width:290px;border:2px solid #000;display:flex;flex-direction:column;">
             <div style="border-bottom:2px solid #000;padding:4px 10px;font:16px/1.2 'Silkscreen',monospace;letter-spacing:1px;">PLUG-IN</div>
@@ -249,7 +265,7 @@
                 <span style="border:2px solid #000;padding:2px 8px;font:16px/1.2 'VT323',monospace;">CLAP</span>
                 <span style="border:2px solid #000;padding:2px 8px;font:16px/1.2 'VT323',monospace;">APP</span>
               </div>
-              <div style="font:19px/1.35 'VT323',monospace;margin:12px 0 0;">A MIDI instrument, not an insert effect. Build a CDP patch from 130+ curated effects, render it, then play the result back polyphonically across the keyboard — in your DAW or standalone.</div>
+              <div style="font:19px/1.35 'VT323',monospace;margin:12px 0 0;">cdp-plugin: An instrument plugin that embeds the cdp-web environment and lets you play back rendered wav files polyphonically across the keyboard.</div>
               <div style="flex:1;"></div>
               <div style="display:flex;gap:10px;margin-top:16px;">
                 <a href="https://github.com/cdp-wasm-suite/cdp-plugin/releases/latest" class="hov" style="flex:1;text-align:center;background:#fff;border:2px solid #000;box-shadow:0 0 0 2px #fff,0 0 0 4px #000;margin:2px;padding:6px 0;font:19px/1 'VT323',monospace;color:#000;">Download ▸</a>
@@ -264,26 +280,10 @@
               <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 0;">
                 <span style="border:2px solid #000;padding:2px 8px;font:16px/1.2 'VT323',monospace;">ABLETON LIVE</span>
               </div>
-              <div style="font:19px/1.35 'VT323',monospace;margin:12px 0 0;">A native Ableton Live extension — the same modular patcher and CDP transformations, wired straight into Live’s workflow.</div>
+              <div style="font:19px/1.35 'VT323',monospace;margin:12px 0 0;">cdp-extension: An Ableton Extension that embeds the cdp-web environment and and lets you process audio offline from the session or arrangement.</div>
               <div style="flex:1;"></div>
               <div style="display:flex;gap:10px;margin-top:16px;">
                 <a href="https://github.com/cdp-wasm-suite/cdp-extension/releases/latest" class="hov" style="flex:1;text-align:center;background:#fff;border:2px solid #000;padding:8px 0;font:19px/1 'VT323',monospace;color:#000;">Download ▸</a>
-              </div>
-            </div>
-          </div>
-          <!-- web -->
-          <div class="card" style="flex:1;min-width:290px;border:2px solid #000;display:flex;flex-direction:column;">
-            <div style="border-bottom:2px solid #000;padding:4px 10px;font:16px/1.2 'Silkscreen',monospace;letter-spacing:1px;">WEB APP</div>
-            <div style="padding:14px;display:flex;flex-direction:column;flex:1;">
-              <div style="font:26px/1.05 'VT323',monospace;">CDP for Web</div>
-              <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 0;">
-                <span style="border:2px solid #000;padding:2px 8px;font:16px/1.2 'VT323',monospace;">BROWSER</span>
-                <span style="border:2px solid #000;padding:2px 8px;font:16px/1.2 'VT323',monospace;">NO INSTALL</span>
-              </div>
-              <div style="font:19px/1.35 'VT323',monospace;margin:12px 0 0;">Drop in a sound or generate one, wire up CDP transforms on a modular canvas.</div>
-              <div style="flex:1;"></div>
-              <div style="display:flex;gap:10px;margin-top:16px;">
-                <a href="https://cdp-wasm-suite.github.io/cdp-web/" class="hov" style="flex:1;text-align:center;background:#fff;border:2px solid #000;box-shadow:0 0 0 2px #fff,0 0 0 4px #000;margin:2px;padding:6px 0;font:19px/1 'VT323',monospace;color:#000;">Launch ▸</a>
               </div>
             </div>
           </div>
